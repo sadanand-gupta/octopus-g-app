@@ -1,0 +1,46 @@
+{
+  "project_info": {
+    "project_number": "280393424640",
+    "project_id": "resume2webai",
+    "storage_bucket": "resume2webai.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:280393424640:android:58a1d2c9292062c79f9de5",
+        "android_client_info": {
+          "package_name": "com.sadanand1.resume2webai"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "280393424640-ffk8mjuvmskbeip2odkvr5rukcrsjcn5.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyAgnltnjgSCszDZGLs0_t8Tta0JZagR3ys"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "280393424640-ffk8mjuvmskbeip2odkvr5rukcrsjcn5.apps.googleusercontent.com",
+              "client_type": 3
+            },
+            {
+              "client_id": "280393424640-sfhgoan7v1f5g5jq91r9e1uneiqd6jdq.apps.googleusercontent.com",
+              "client_type": 2,
+              "ios_info": {
+                "bundle_id": "com.sadanand1.resume2webai"
+              }
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
