@@ -1,7 +1,7 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android">
     <uses-permission android:name="android.permission.INTERNET"/>
     <application
-        android:label="resume2web_ai"
+        android:label="Octopus G"
         android:name="${applicationName}"
         android:icon="@mipmap/ic_launcher">
         <activity

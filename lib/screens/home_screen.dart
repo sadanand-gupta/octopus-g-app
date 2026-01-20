@@ -1,195 +1,296 @@
-import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import 'package:file_picker/file_picker.dart';
-import 'package:read_pdf_text/read_pdf_text.dart';
-import 'package:skeletonizer/skeletonizer.dart';
 import '../services/auth_service.dart';
-import '../services/ai_service.dart';
-import 'generated_site_screen.dart';
+import '../constants/app_colors.dart';
+import 'login_screen.dart';
+import 'resume_upload_screen.dart';
 
-class HomeScreen extends StatefulWidget {
+class HomeScreen extends StatelessWidget {
   const HomeScreen({super.key});
 
   @override
-  State<HomeScreen> createState() => _HomeScreenState();
-}
-
-class _HomeScreenState extends State<HomeScreen> {
-  String? _extractedText;
-  String? _fileName;
-  bool _isReadingPdf = false;
-
-  // Pick PDF and Extract Text
-  Future<void> _pickAndExtractPdf() async {
-    FilePickerResult? result = await FilePicker.platform.pickFiles(
-      type: FileType.custom,
-      allowedExtensions: ['pdf'],
-    );
-
-    if (result != null) {
-      setState(() {
-        _isReadingPdf = true;
-        _fileName = result.files.single.name;
-      });
-
-      try {
-        String text = await ReadPdfText.getPDFtext(result.files.single.path!);
-        setState(() {
-          _extractedText = text;
-        });
-      } catch (e) {
-        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Error reading PDF: $e')));
-      } finally {
-        setState(() => _isReadingPdf = false);
-      }
-    }
-  }
-
-  void _showExtractedData() {
-    showModalBottomSheet(
-      context: context,
-      isScrollControlled: true,
-      backgroundColor: Colors.white,
-      shape: const RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(20))),
-      builder: (ctx) => DraggableScrollableSheet(
-        expand: false,
-        initialChildSize: 0.6,
-        builder: (_, controller) => Padding(
-          padding: const EdgeInsets.all(20.0),
-          child: ListView(
-            controller: controller,
-            children: [
-              const Text("Extracted Resume Content", style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold)),
-              const Divider(),
-              Text(_extractedText ?? "No content found.", style: const TextStyle(fontSize: 14, height: 1.5)),
-            ],
-          ),
-        ),
-      ),
-    );
-  }
-
-  void _generatePortfolio() async {
-    if (_extractedText == null) return;
-
-    final aiService = Provider.of<AiService>(context, listen: false);
-    String code = await aiService.generatePortfolioCode(_extractedText!);
-
-    if (mounted) {
-      Navigator.push(context, MaterialPageRoute(builder: (_) => GeneratedSiteScreen(htmlCode: code)));
-    }
-  }
-
-  @override
   Widget build(BuildContext context) {
-    final authService = Provider.of<AuthService>(context);
-    final aiService = Provider.of<AiService>(context);
+    final auth = Provider.of<AuthService>(context, listen: false);
+    final user = auth.currentUser;
 
     return Scaffold(
-      extendBodyBehindAppBar: true,
-      appBar: AppBar(
-        title: const Text("Portfolio.AI", style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
-        backgroundColor: Colors.transparent,
-        elevation: 0,
-        actions: [
-          IconButton(
-            icon: const Icon(Icons.person, color: Colors.white),
-            onPressed: () => _showProfileDialog(context, authService),
-          )
-        ],
-      ),
-      body: Container(
-        decoration: const BoxDecoration(
-          gradient: LinearGradient(
-            colors: [Color(0xFF2575FC), Color(0xFF6A11CB)],
-            begin: Alignment.topRight,
-            end: Alignment.bottomLeft,
-          ),
-        ),
-        child: SafeArea(
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
-              const SizedBox(height: 20),
-              // Header
-              const Padding(
-                padding: EdgeInsets.symmetric(horizontal: 20.0),
-                child: Text(
-                  "Build your dream portfolio\nin seconds.",
-                  style: TextStyle(color: Colors.white, fontSize: 24, fontWeight: FontWeight.bold),
-                ),
-              ),
-              const SizedBox(height: 40),
-
-              // Main Card
-              Expanded(
-                child: Container(
-                  width: double.infinity,
-                  decoration: const BoxDecoration(
-                    color: Colors.white,
-                    borderRadius: BorderRadius.only(topLeft: Radius.circular(30), topRight: Radius.circular(30)),
-                  ),
-                  padding: const EdgeInsets.all(24),
-                  child: Column(
+      backgroundColor: AppColors.background,
+      body: SafeArea(
+        child: Column(
+          children: [
+            // Custom App Bar
+            Container(
+              color: AppColors.surface,
+              padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Row(
                     children: [
-                      // Upload Section
-                      _buildActionCard(
-                        icon: Icons.upload_file,
-                        title: _fileName ?? "Upload Resume (PDF)",
-                        subtitle: "We extract details to build your site.",
-                        onTap: _pickAndExtractPdf,
-                        isLoading: _isReadingPdf,
+                      Image.asset(
+                        'assets/icon/icon_1024.png',
+                        width: 36,
+                        height: 36,
                       ),
-
-                      const SizedBox(height: 20),
-
-                      // Actions (Visible only after upload)
-                      if (_extractedText != null) ...[
-                        Skeletonizer(
-                          enabled: aiService.isLoading,
-                          child: Row(
-                            children: [
-                              Expanded(
-                                child: _buildActionCard(
-                                  icon: Icons.remove_red_eye,
-                                  title: "View Data",
-                                  subtitle: "Check extracted info",
-                                  onTap: _showExtractedData,
-                                  isSmall: true,
-                                ),
-                              ),
-                              const SizedBox(width: 15),
-                              Expanded(
-                                child: _buildActionCard(
-                                  icon: Icons.sync,
-                                  title: "Sync & Gen",
-                                  subtitle: "Create Website",
-                                  onTap: _generatePortfolio,
-                                  isSmall: true,
-                                  color: Colors.orangeAccent,
-                                ),
-                              ),
-                            ],
-                          ),
+                      const SizedBox(width: 12),
+                      Container(
+                        height: 20,
+                        width: 1,
+                        color: AppColors.divider,
+                      ),
+                      const SizedBox(width: 12),
+                      const Text(
+                        'OCTOPUS G',
+                        style: TextStyle(
+                          color: AppColors.textPrimary,
+                          fontSize: 12,
+                          fontWeight: FontWeight.w600,
+                          letterSpacing: 2,
                         ),
-                      ],
-
-                      const Spacer(),
-                      if (aiService.isLoading)
-                        const Column(
-                          children: [
-                            CircularProgressIndicator(),
-                            SizedBox(height: 10),
-                            Text("AI is crafting your website...")
-                          ],
-                        )
+                      ),
                     ],
                   ),
+                  GestureDetector(
+                    onTap: () async {
+                      await auth.signOut();
+                      if (context.mounted) {
+                        Navigator.of(context).pushReplacement(
+                          MaterialPageRoute(
+                              builder: (_) => const LoginScreen()),
+                        );
+                      }
+                    },
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: 16, vertical: 8),
+                      decoration: BoxDecoration(
+                        border: Border.all(color: AppColors.divider),
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                      child: const Row(
+                        children: [
+                          Icon(Icons.logout_outlined,
+                              color: AppColors.textSecondary, size: 18),
+                          SizedBox(width: 8),
+                          Text(
+                            'Sign Out',
+                            style: TextStyle(
+                              color: AppColors.textSecondary,
+                              fontSize: 13,
+                              fontWeight: FontWeight.w500,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+
+            const Divider(color: AppColors.divider, height: 1),
+
+            Expanded(
+              child: SingleChildScrollView(
+                padding: const EdgeInsets.all(24),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    const SizedBox(height: 20),
+
+                    // Welcome Section
+                    Center(
+                      child: Column(
+                        children: [
+                          Container(
+                            width: 80,
+                            height: 80,
+                            decoration: const BoxDecoration(
+                              color: AppColors.inputBackground,
+                              shape: BoxShape.circle,
+                            ),
+                            child: const Icon(
+                              Icons.person_outline,
+                              size: 40,
+                              color: AppColors.primaryBlue,
+                            ),
+                          ),
+                          const SizedBox(height: 20),
+                          const Text(
+                            'Welcome Back',
+                            style: TextStyle(
+                              fontSize: 28,
+                              fontWeight: FontWeight.w600,
+                              color: AppColors.textPrimary,
+                              letterSpacing: 0.5,
+                            ),
+                          ),
+                          const SizedBox(height: 8),
+                          Text(
+                            user?.email ?? 'User',
+                            style: const TextStyle(
+                              fontSize: 14,
+                              color: AppColors.textSecondary,
+                              fontWeight: FontWeight.w400,
+                            ),
+                          ),
+                          const SizedBox(height: 16),
+                          Container(
+                            height: 2,
+                            width: 60,
+                            decoration: BoxDecoration(
+                              gradient: const LinearGradient(
+                                colors: [
+                                  AppColors.primaryBlue,
+                                  AppColors.accentLight
+                                ],
+                              ),
+                              borderRadius: BorderRadius.circular(1),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+
+                    const SizedBox(height: 48),
+
+                    const Text(
+                      'QUICK ACTIONS',
+                      style: TextStyle(
+                        fontSize: 11,
+                        fontWeight: FontWeight.w600,
+                        color: AppColors.textSecondary,
+                        letterSpacing: 2,
+                      ),
+                    ),
+                    const SizedBox(height: 16),
+
+                    _buildActionCard(
+                      icon: Icons.upload_file_outlined,
+                      title: 'Upload Resume',
+                      subtitle: 'Upload PDF and generate portfolio',
+                      onTap: () {
+                        Navigator.of(context).push(
+                          MaterialPageRoute(
+                              builder: (_) => const ResumeUploadScreen()),
+                        );
+                      },
+                    ),
+                    const SizedBox(height: 12),
+                    _buildActionCard(
+                      icon: Icons.description_outlined,
+                      title: 'My Resume',
+                      subtitle: 'View and edit your resume',
+                      onTap: () {},
+                    ),
+                    const SizedBox(height: 12),
+                    _buildActionCard(
+                      icon: Icons.web_outlined,
+                      title: 'Portfolio Website',
+                      subtitle: 'Generate your web portfolio',
+                      onTap: () {},
+                    ),
+                    const SizedBox(height: 12),
+                    _buildActionCard(
+                      icon: Icons.settings_outlined,
+                      title: 'Settings',
+                      subtitle: 'Manage your account preferences',
+                      onTap: () {},
+                    ),
+
+                    const SizedBox(height: 48),
+
+                    const Text(
+                      'YOUR STATS',
+                      style: TextStyle(
+                        fontSize: 11,
+                        fontWeight: FontWeight.w600,
+                        color: AppColors.textSecondary,
+                        letterSpacing: 2,
+                      ),
+                    ),
+                    const SizedBox(height: 16),
+
+                    Row(
+                      children: [
+                        Expanded(child: _buildStatCard('0', 'Resumes')),
+                        const SizedBox(width: 12),
+                        Expanded(child: _buildStatCard('0', 'Portfolios')),
+                        const SizedBox(width: 12),
+                        Expanded(child: _buildStatCard('0', 'Views')),
+                      ],
+                    ),
+
+                    const SizedBox(height: 32),
+
+                    // Add tip card
+                    Container(
+                      padding: const EdgeInsets.all(16),
+                      decoration: BoxDecoration(
+                        color: AppColors.primaryBlue.withOpacity(0.05),
+                        borderRadius: BorderRadius.circular(12),
+                        border: Border.all(
+                            color: AppColors.primaryBlue.withOpacity(0.1)),
+                      ),
+                      child: Row(
+                        children: [
+                          Container(
+                            width: 40,
+                            height: 40,
+                            decoration: BoxDecoration(
+                              color: AppColors.primaryBlue.withOpacity(0.1),
+                              borderRadius: BorderRadius.circular(10),
+                            ),
+                            child: const Icon(Icons.lightbulb_outline,
+                                color: AppColors.primaryBlue, size: 20),
+                          ),
+                          const SizedBox(width: 12),
+                          const Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(
+                                  'Pro Tip',
+                                  style: TextStyle(
+                                    fontSize: 14,
+                                    fontWeight: FontWeight.w600,
+                                    color: AppColors.textPrimary,
+                                  ),
+                                ),
+                                SizedBox(height: 2),
+                                Text(
+                                  'Upload a detailed resume for better portfolio results',
+                                  style: TextStyle(
+                                    fontSize: 12,
+                                    color: AppColors.textSecondary,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+
+                    const SizedBox(height: 24),
+                  ],
                 ),
               ),
-            ],
-          ),
+            ),
+
+            const Padding(
+              padding: EdgeInsets.only(bottom: 24),
+              child: Text(
+                'PREMIUM EXPERIENCE',
+                style: TextStyle(
+                  color: AppColors.textSecondary,
+                  fontSize: 10,
+                  letterSpacing: 2,
+                  fontWeight: FontWeight.w400,
+                ),
+              ),
+            ),
+          ],
         ),
       ),
     );
@@ -199,80 +300,92 @@ class _HomeScreenState extends State<HomeScreen> {
     required IconData icon,
     required String title,
     required String subtitle,
-    VoidCallback? onTap,
-    bool isSmall = false,
-    Color color = const Color(0xFF6A11CB),
-    bool isLoading = false,
+    required VoidCallback onTap,
   }) {
     return GestureDetector(
       onTap: onTap,
       child: Container(
         padding: const EdgeInsets.all(20),
         decoration: BoxDecoration(
-          color: Colors.white,
-          borderRadius: BorderRadius.circular(20),
-          boxShadow: [BoxShadow(color: Colors.grey.withOpacity(0.1), blurRadius: 10, offset: const Offset(0, 5))],
-          border: Border.all(color: Colors.grey.shade200),
+          color: AppColors.surface,
+          borderRadius: BorderRadius.circular(12),
+          border: Border.all(color: AppColors.divider),
         ),
-        child: isLoading
-            ? const Center(child: CircularProgressIndicator())
-            : Column(
-          mainAxisAlignment: MainAxisAlignment.center,
+        child: Row(
           children: [
-            CircleAvatar(
-              radius: isSmall ? 20 : 30,
-              backgroundColor: color.withOpacity(0.1),
-              child: Icon(icon, color: color, size: isSmall ? 20 : 30),
+            Container(
+              width: 48,
+              height: 48,
+              decoration: BoxDecoration(
+                color: AppColors.primaryBlue.withOpacity(0.1),
+                borderRadius: BorderRadius.circular(10),
+              ),
+              child: Icon(icon, color: AppColors.primaryBlue, size: 24),
             ),
-            const SizedBox(height: 15),
-            Text(title, style: TextStyle(fontWeight: FontWeight.bold, fontSize: isSmall ? 16 : 18), textAlign: TextAlign.center, maxLines: 1, overflow: TextOverflow.ellipsis),
-            if (!isSmall) ...[
-              const SizedBox(height: 5),
-              Text(subtitle, style: TextStyle(color: Colors.grey.shade600, fontSize: 12)),
-            ]
+            const SizedBox(width: 16),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    title,
+                    style: const TextStyle(
+                      fontSize: 16,
+                      fontWeight: FontWeight.w600,
+                      color: AppColors.textPrimary,
+                    ),
+                  ),
+                  const SizedBox(height: 4),
+                  Text(
+                    subtitle,
+                    style: const TextStyle(
+                      fontSize: 13,
+                      color: AppColors.textSecondary,
+                      fontWeight: FontWeight.w400,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            const Icon(
+              Icons.arrow_forward_ios,
+              color: AppColors.textSecondary,
+              size: 16,
+            ),
           ],
         ),
       ),
     );
   }
 
-  void _showProfileDialog(BuildContext context, AuthService auth) {
-    showDialog(
-      context: context,
-      builder: (ctx) => FutureBuilder<Map<String, dynamic>?>(
-          future: auth.getUserData(),
-          builder: (context, snapshot) {
-            final data = snapshot.data;
-            return AlertDialog(
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-              title: const Center(child: Text("Profile")),
-              content: Column(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  const CircleAvatar(
-                    radius: 40,
-                    backgroundImage: NetworkImage('https://i.pravatar.cc/150'), // Default Avatar
-                  ),
-                  const SizedBox(height: 20),
-                  Text(data?['username'] ?? "User", style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 18)),
-                  Text(auth.currentUser?.email ?? "", style: const TextStyle(color: Colors.grey)),
-                ],
-              ),
-              actions: [
-                TextButton(
-                  onPressed: () {
-                    Navigator.pop(ctx);
-                    auth.signOut();
-                  },
-                  child: const Text("Log Out", style: TextStyle(color: Colors.red)),
-                ),
-                TextButton(
-                  onPressed: () => Navigator.pop(ctx),
-                  child: const Text("Close"),
-                ),
-              ],
-            );
-          }
+  Widget _buildStatCard(String value, String label) {
+    return Container(
+      padding: const EdgeInsets.symmetric(vertical: 20),
+      decoration: BoxDecoration(
+        color: AppColors.surface,
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: AppColors.divider),
+      ),
+      child: Column(
+        children: [
+          Text(
+            value,
+            style: const TextStyle(
+              fontSize: 28,
+              fontWeight: FontWeight.w600,
+              color: AppColors.primaryBlue,
+            ),
+          ),
+          const SizedBox(height: 4),
+          Text(
+            label,
+            style: const TextStyle(
+              fontSize: 12,
+              color: AppColors.textSecondary,
+              fontWeight: FontWeight.w500,
+            ),
+          ),
+        ],
       ),
     );
   }
